@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 """
-Deepfake Detection CLI Tool
+Deepfake Detection CLI Tool with Explainable AI (Grad-CAM)
 Usage:
-    python detect.py --input sample_data/fake_sample_1.jpg --model ffpp --gradcam
-    python detect.py --input sample_data/real_sample_1.jpg --model celebdf --gradcam
-    python detect.py --input sample_data/ --model celebdf
-    python detect.py --input path/to/video.mp4 --model ffpp
+    python detect.py --input sample_data/ffpp_fake_1.jpg --model ffpp --gradcam
+    python detect.py --input sample_data/celebdf_real_1.jpg --model celebdf --gradcam
+    python detect.py --input sample_data/verified_real_portrait.jpg --model ensemble
+    python detect.py --input sample_data/ --model ensemble
+    python detect.py --input path/to/video.mp4 --model ensemble
 """
 
 import os
@@ -15,7 +16,6 @@ import cv2
 from infer import DeepfakeDetector
 
 def format_verdict(label, confidence, prob_fake, logit):
-    badge = f"[\033[91mFAKE\033[0m]" if label == 'FAKE' else f"[\033[92mREAL\033[0m]"
     color = "\033[91m" if label == 'FAKE' else "\033[92m"
     reset = "\033[0m"
     return f"{color}{label}{reset} (Confidence: {confidence*100:.2f}%, P(Fake)={prob_fake:.4f}, Logit={logit:.2f})"
@@ -29,9 +29,14 @@ def process_single_image(detector, img_path, output_dir, save_gradcam=True):
     confidence = primary['confidence']
     prob = primary['prob_fake']
     logit = primary['raw_logit']
+    details = primary.get('ensemble_details', {})
 
     print(f"  Faces Detected: {result['faces_count']}")
     print(f"  Verdict:        {format_verdict(label, confidence, prob, logit)}")
+    if 'signature' in details:
+        print(f"  Signature:      {details['signature']}")
+    if 'celebdf_prob' in details:
+        print(f"  Model Breakdown: Celeb-DF P(Fake)={details['celebdf_prob']:.4f} | FF++ P(Fake)={details['ffpp_prob']:.4f}")
 
     os.makedirs(output_dir, exist_ok=True)
     base_name = os.path.splitext(os.path.basename(img_path))[0]
@@ -58,16 +63,16 @@ def process_video(detector, video_path, output_dir):
 def main():
     parser = argparse.ArgumentParser(description="Deepfake Detection using XceptionNet and Explainable AI (Grad-CAM)")
     parser.add_argument('--input', '-i', type=str, required=True, help="Path to input image, video, or directory")
-    parser.add_argument('--model', '-m', type=str, default='celebdf', choices=['celebdf', 'ffpp'], help="Model weights to use ('celebdf' or 'ffpp')")
+    parser.add_argument('--model', '-m', type=str, default='ensemble', choices=['ensemble', 'celebdf', 'ffpp'], help="Model weights to use ('ensemble', 'celebdf', or 'ffpp')")
     parser.add_argument('--gradcam', action='store_true', default=True, help="Generate and save Grad-CAM visual explanations")
     parser.add_argument('--output-dir', '-o', type=str, default='runs/detect', help="Directory to save detection outputs")
 
     args = parser.parse_args()
 
-    print("=" * 60)
-    print("  DEEPFAKE DETECTION with EXPLAINABLE AI (XceptionNet)")
-    print(f"  Model: {args.model.upper()} | Output: {args.output_dir}")
-    print("=" * 60)
+    print("=" * 65)
+    print("  DEEPFAKE DETECTION with EXPLAINABLE AI (XceptionNet + Grad-CAM)")
+    print(f"  Mode: {args.model.upper()} | Output Directory: {args.output_dir}")
+    print("=" * 65)
 
     detector = DeepfakeDetector(model_type=args.model)
 
