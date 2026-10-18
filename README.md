@@ -1,29 +1,113 @@
-<img src="https://github.com/pytorch/pytorch/blob/main/docs/source/_static/img/pytorch-logo-dark.png" alt="PyTorch Logo" width="200"/>
+<p align="center">
+  <img src="https://github.com/pytorch/pytorch/blob/main/docs/source/_static/img/pytorch-logo-dark.png" alt="PyTorch Logo" width="180"/>
+</p>
 
-## "Deepfake-detection" with Explainable AI
+<h1 align="center">Deepfake Detection with Explainable AI (XAI)</h1>
 
-This repo contains the code, results, models for Deep Fake detection with XAI.
-Course Project for ECE 792 - Advanced Machine Learning
+<p align="center">
+  <b>State-of-the-Art Deepfake Detection leveraging XceptionNet, Grad-CAM, and LIME interpretability with an interactive Web Dashboard and CLI.</b>
+</p>
 
-- To classify real and fake images, pretrained XceptionNet model is implemented.
-- For model interpretability, algorithms such as LIME and Grad-CAM are implemented.
+---
 
-#### Datasets used:
-- FaceForensic++: The dataset is used for benchmarking face manipulation detection. The fake videos are crated by four different manipulation methods. The dataset consists of a total of 1,000 videos (500 real and 500 manipulated) with 50 videos for each manipulation method. The data set can be found [here](https://github.com/ondyari/FaceForensics)
-- Celeb-DF: The Celeb-DF dataset is a large-scale video dataset that is specifically designed for deepfake detection research. It is composed of over 590,000 video clips featuring 1,100 paid actors in a variety of facial expressions, head poses, and lighting conditions. The actors are celebrities from various domains such as politics, entertainment, and sports. The dataset can be found [here](https://github.com/yuezunli/celeb-deepfakeforensics)
+## 📌 Overview
+This repository provides an end-to-end deepfake detection and model interpretability framework. Deep neural networks often act as black boxes; this project integrates **Explainable AI (XAI)** techniques (**Grad-CAM** and **LIME**) alongside **XceptionNet** architectures to pinpoint exactly which facial features and synthesis artifacts drive the model's classifications.
 
-#### Project Description
-- The objective of this project is to incorporate explainable AI (XAI) techniques to gain insights into the interpretability of the model. The project utilizes state-of-the-art XceptionNet to detect deepfakes, and then employs LIME and GradCam algorithms to visualize and analyze how the model interprets the results.
-- Images were used instead of Videos from the dataset and a python script was written to extract images from the videos.
+- **Deep Learning Model**: Pretrained and fine-tuned **XceptionNet** architectures (FaceForensics++ and Celeb-DF v2 checkpoints).
+- **Explainable AI (XAI)**:
+  - **Grad-CAM**: Generates class activation heatmaps on intermediate separable convolution feature maps to highlight forgery boundaries, warping seams, and unnatural textures.
+  - **LIME**: Identifies superpixel segments with highest contribution to real vs. fake predictions.
+- **Serving & UI**:
+  - **Interactive Web App**: Modern Flask web dashboard with drag-and-drop image upload, real-time face detection, and dual-view Grad-CAM analysis.
+  - **CLI Pipeline**: Command-line tool supporting single images, image batches, and video analysis.
 
-#### Files Description
-- ```models```: contains trained models for FaceForensic++ and Celeb-DF datasets
-- ```outputs```: contains output results of prediction of real and fake, lime and grad-cam algorithms
-- ```plots```: contains plots of accuracy, loss against epochs
-- ```CelebDF_XceptionNet_Code.ipynb```: contains code of xception on celebdf dataset
-- ```FaceForensics_XceptionNet_Code.ipynb```: contains code of xception on faceforensics dataset
-- ```face_extraction_code_from_vidoes.py```: contains code for extraction of faces from the videos
-- ```grad_cam.ipynb```: contains the code for gradCAM algorithm
-- ```lime_code.ipynb```: contains the code for LIME algorithms
-- ```plot_curves.ipynb```: contains the code to plot the graphs
-- ```test_predictions.ipynb```: continas the code for predicicion on test dataset
+---
+
+## 🗂️ Datasets
+1. **FaceForensics++ (FF++)**: Benchmark dataset for facial manipulation detection covering multiple manipulation techniques (Deepfakes, Face2Face, FaceSwap, NeuralTextures). [Repository](https://github.com/ondyari/FaceForensics)
+2. **Celeb-DF (v2)**: Large-scale deepfake dataset of celebrity interview clips under diverse lighting conditions, angles, and facial expressions. [Repository](https://github.com/yuezunli/celeb-deepfakeforensics)
+
+---
+
+## 🚀 Quick Start
+
+### 1. Installation
+Clone the repository and install dependencies:
+```bash
+git clone https://github.com/ayush011-1/deepfake-detection.git
+cd deepfake-detection
+pip install -r requirements.txt
+```
+
+### 2. Run the Interactive Web Dashboard
+Launch the web interface locally:
+```bash
+python app.py
+```
+Open your browser and navigate to:
+```
+http://127.0.0.1:5001
+```
+From the dashboard:
+- Switch between **Celeb-DF** and **FaceForensics++** trained models.
+- Upload any facial photo or test with one-click benchmark samples.
+- View face bounding box detection, fake probability, confidence score, and side-by-side **Grad-CAM heatmap**.
+
+---
+
+## 🖥️ Command-Line Interface (CLI)
+
+Use `detect.py` to run predictions directly from your terminal:
+
+```bash
+# Analyze a single image with Celeb-DF model & generate Grad-CAM
+python detect.py --input sample_data/fake_sample_1.jpg --model celebdf --gradcam
+
+# Analyze with FaceForensics++ model
+python detect.py --input sample_data/real_sample_1.jpg --model ffpp --gradcam
+
+# Analyze an entire folder of images
+python detect.py --input sample_data/ --model celebdf --output-dir runs/detect
+
+# Analyze a video file
+python detect.py --input path/to/video.mp4 --model ffpp
+```
+
+Detection outputs and Grad-CAM overlays are saved automatically to `runs/detect/`.
+
+---
+
+## 📁 Repository Structure
+```
+├── app.py                             # Interactive Flask web application & dashboard
+├── detect.py                          # Command-line interface for image/video detection
+├── infer.py                           # DeepfakeDetector inference engine (XceptionNet + Grad-CAM)
+├── requirements.txt                   # Project dependencies
+├── models/
+│   ├── CelebDF_model_20_epochs_99acc.pt # Trained XceptionNet weights (Celeb-DF)
+│   └── FFPP_model_20_epochs_99acc.pt    # Trained XceptionNet weights (FaceForensics++)
+├── sample_data/                       # Benchmark test images (Real & Fake)
+├── FaceForensics_XceptionNet_Code.ipynb # Training notebook for FaceForensics++
+├── CelebDF_XceptionNet_Code.ipynb     # Training notebook for Celeb-DF
+├── grad_cam.ipynb                     # Grad-CAM implementation & experiments
+├── lime_code.ipynb                    # LIME explainability experiments
+├── plot_curves.ipynb                  # Training loss & accuracy curve plots
+├── test_predictions.ipynb             # Batch test set evaluation notebook
+├── face_extraction_code_from_videos.py # Face crop preprocessing utility
+├── outputs/                           # Sample Grad-CAM & LIME visualizations
+└── plots/                             # Training evaluation curves
+```
+
+---
+
+## 🔬 Explainable AI (XAI) Methodology
+1. **Grad-CAM (Gradient-weighted Class Activation Mapping)**:
+   - Computes gradients of the target class score with respect to feature maps in the final separable convolutional block of XceptionNet.
+   - Weights feature maps by global average-pooled gradients to highlight discriminative regions (e.g. blend boundaries around the mouth or eyes).
+2. **LIME (Local Interpretable Model-agnostic Explanations)**:
+   - Perturbs superpixels with Quickshift segmentation to determine local feature contributions to the prediction.
+
+---
+
+## 📄 License
+This project is licensed under the MIT License - see the LICENSE file for details.
