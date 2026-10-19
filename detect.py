@@ -20,17 +20,19 @@ def format_verdict(label, confidence, prob_fake, logit):
     reset = "\033[0m"
     return f"{color}{label}{reset} (Confidence: {confidence*100:.2f}%, P(Fake)={prob_fake:.4f}, Logit={logit:.2f})"
 
-def process_single_image(detector, img_path, output_dir, save_gradcam=True):
+def process_single_image(detector, img_path, output_dir, save_gradcam=True, save_lime=False):
     print(f"\nAnalyzing: {img_path}")
-    result = detector.predict_image(img_path, return_gradcam=save_gradcam)
+    result = detector.predict_image(img_path, return_gradcam=save_gradcam, return_lime=save_lime)
     
     primary = result['primary']
     label = primary['label']
     confidence = primary['confidence']
     prob = primary['prob_fake']
     logit = primary['raw_logit']
+    arch = primary.get('architecture', 'XceptionNet')
     details = primary.get('ensemble_details', {})
 
+    print(f"  Architecture:   {arch}")
     print(f"  Faces Detected: {result['faces_count']}")
     print(f"  Verdict:        {format_verdict(label, confidence, prob, logit)}")
     if 'signature' in details:
@@ -52,6 +54,12 @@ def process_single_image(detector, img_path, output_dir, save_gradcam=True):
         cv2.imwrite(gradcam_path, primary['gradcam_overlay'])
         print(f"  Saved Grad-CAM:  {gradcam_path}")
 
+    # Save LIME if available
+    if save_lime and primary.get('lime_overlay') is not None:
+        lime_path = os.path.join(output_dir, f"{base_name}_lime.jpg")
+        cv2.imwrite(lime_path, primary['lime_overlay'])
+        print(f"  Saved LIME XAI:  {lime_path}")
+
 def process_video(detector, video_path, output_dir):
     print(f"\nAnalyzing Video: {video_path}")
     res = detector.predict_video(video_path, frame_skip=15, max_frames=60)
@@ -61,18 +69,21 @@ def process_video(detector, video_path, output_dir):
     print(f"  Real Frames:     {res['real_percentage']:.1f}%")
 
 def main():
-    parser = argparse.ArgumentParser(description="Deepfake Detection using XceptionNet and Explainable AI (Grad-CAM)")
+    parser = argparse.ArgumentParser(description="Deepfake Detection using Machine Learning & Explainable AI (Grad-CAM & LIME)")
     parser.add_argument('--input', '-i', type=str, required=True, help="Path to input image, video, or directory")
-    parser.add_argument('--model', '-m', type=str, default='ensemble', choices=['ensemble', 'celebdf', 'ffpp'], help="Model weights to use ('ensemble', 'celebdf', or 'ffpp')")
-    parser.add_argument('--gradcam', action='store_true', default=True, help="Generate and save Grad-CAM visual explanations")
+    parser.add_argument('--model', '-m', type=str, default='ensemble', 
+                        choices=['ensemble', 'celebdf', 'ffpp', 'synthetic', 'svm', 'rf', 'logreg'], 
+                        help="Model classifier to use: 'ensemble', 'synthetic', 'celebdf', 'ffpp', 'svm', 'rf', or 'logreg'")
+    parser.add_argument('--gradcam', action='store_true', default=True, help="Generate and save Grad-CAM visual heatmaps")
+    parser.add_argument('--lime', action='store_true', default=False, help="Generate and save LIME superpixel segment explanations")
     parser.add_argument('--output-dir', '-o', type=str, default='runs/detect', help="Directory to save detection outputs")
 
     args = parser.parse_args()
 
-    print("=" * 65)
-    print("  DEEPFAKE DETECTION with EXPLAINABLE AI (XceptionNet + Grad-CAM)")
-    print(f"  Mode: {args.model.upper()} | Output Directory: {args.output_dir}")
-    print("=" * 65)
+    print("=" * 70)
+    print("  DEEPFAKE DETECTION: MACHINE LEARNING WITH EXPLAINABLE AI (XAI)")
+    print(f"  Model Classifier: {args.model.upper()} | Output: {args.output_dir}")
+    print("=" * 70)
 
     detector = DeepfakeDetector(model_type=args.model)
 
@@ -83,11 +94,11 @@ def main():
             print(f"No valid image files found in {args.input}")
             return
         for f in sorted(files):
-            process_single_image(detector, f, args.output_dir, save_gradcam=args.gradcam)
+            process_single_image(detector, f, args.output_dir, save_gradcam=args.gradcam, save_lime=args.lime)
     elif args.input.lower().endswith(('.mp4', '.avi', '.mov', '.mkv')):
         process_video(detector, args.input, args.output_dir)
     elif os.path.isfile(args.input):
-        process_single_image(detector, args.input, args.output_dir, save_gradcam=args.gradcam)
+        process_single_image(detector, args.input, args.output_dir, save_gradcam=args.gradcam, save_lime=args.lime)
     else:
         print(f"Error: Path {args.input} does not exist.")
 
