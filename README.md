@@ -21,6 +21,8 @@ This repository provides an end-to-end deepfake detection and model interpretabi
   - **Interactive Web App**: Modern Flask web dashboard with drag-and-drop image upload, real-time face detection, and dual-view Grad-CAM analysis.
   - **CLI Pipeline**: Command-line tool supporting single images, image batches, and video analysis.
 
+> 📖 **Comprehensive Project Documentation**: For an exhaustive, in-depth technical analysis covering the mathematical formulation of Depthwise Separable Convolutions, Grad-CAM/LIME derivations, dataset comparison tables, confusion matrices, and real-world considerations, see [PROJECT_DOCUMENTATION.md](file:///Users/ayushsonawane/deepfake-detection/PROJECT_DOCUMENTATION.md).
+
 ---
 
 ## 🗂️ Datasets
@@ -75,6 +77,12 @@ python detect.py --input path/to/video.mp4 --model ffpp
 
 Detection outputs and Grad-CAM overlays are saved automatically to `runs/detect/`.
 
+### 🔬 Classical ML Baselines (SVM, Logistic Regression, Random Forest)
+To benchmark classical machine learning algorithms against deep representations:
+```bash
+python evaluate_classical_ml_baseline.py --features all
+```
+
 ---
 
 ## 📁 Repository Structure
@@ -82,7 +90,9 @@ Detection outputs and Grad-CAM overlays are saved automatically to `runs/detect/
 ├── app.py                             # Interactive Flask web application & dashboard
 ├── detect.py                          # Command-line interface for image/video detection
 ├── infer.py                           # DeepfakeDetector inference engine (XceptionNet + Grad-CAM)
+├── evaluate_classical_ml_baseline.py  # Classical ML benchmark (SVM, Logistic Regression, Random Forest)
 ├── requirements.txt                   # Project dependencies
+├── PROJECT_DOCUMENTATION.md           # Comprehensive master documentation & derivations
 ├── models/
 │   ├── CelebDF_model_20_epochs_99acc.pt # Trained XceptionNet weights (Celeb-DF)
 │   └── FFPP_model_20_epochs_99acc.pt    # Trained XceptionNet weights (FaceForensics++)
